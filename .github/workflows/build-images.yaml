@@ -15,20 +15,17 @@ jobs:
       run: |
         cd bind
         REPO="library/alpine"
-        echo $REPO
         TAG=latest
-        echo $TAG
-        curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull"
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
-        VERSION=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq -r '.[][0]["annotations"]["org.opencontainers.image.version"]' 2> /dev/null)
-        echo $VERSION
+        VERSION=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq -r '.["manifests"][0]["annotations"]["org.opencontainers.image.version"]')
         REPO="marvinsinister/bind"
-        echo $REPO
         TAG=alpine-$VERSION
-        echo $TAG
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
-        HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq '.')
-        echo $HTTP_CODE
+        HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG")
         if [[ $HTTP_CODE != "200" ]] ; then
+          echo "Building for alpine:$VERSION."
           podman build -t docker.io/marvinsinister/bind:alpine-${TAG} --build-arg ALPINE_TAG=${TAG} .
+        else
+          echo "Image for alpine:$VERSION already exists."
         fi
+         
