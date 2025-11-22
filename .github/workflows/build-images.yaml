@@ -24,7 +24,7 @@ jobs:
         HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG")
         if [[ $HTTP_CODE != "200" ]] ; then
           echo "Building for alpine:$VERSION."
-          podman build -t docker.io/marvinsinister/bind:alpine-${TAG} --build-arg ALPINE_TAG=${TAG} .
+          podman build -t docker.io/marvinsinister/bind:alpine-${TAG} --build-arg ALPINE_TAG=${VERSION} .
         else
           echo "Image for alpine:$VERSION already exists."
         fi
