@@ -25,6 +25,10 @@ jobs:
         if [[ $HTTP_CODE != "200" ]] ; then
           echo "Building for alpine:$VERSION."
           podman build -t docker.io/marvinsinister/bind:alpine-${TAG} --build-arg ALPINE_TAG=${VERSION} .
+          podman tag docker.io/marvinsinister/bind:alpine-${TAG} docker.io/marvinsinister/bind:latest
+          podman login -u ${{ vars.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }} docker.io
+          podman push docker.io/marvinsinister/bind:alpine-${TAG}
+          podman push docker.io/marvinsinister/bind:latest
         else
           echo "Image for alpine:$VERSION already exists."
         fi
