@@ -1,0 +1,23 @@
+ARG ALPINE_TAG=latest
+FROM alpine:$ALPINE_TAG
+
+LABEL maintainer="Marvin Sinister"
+
+RUN addgroup -S -g 5353 bind && adduser -S -u 5353 -G bind bind; \
+    apk add --no-cache ca-certificates bind; \
+    mkdir /var/cache/bind; \
+    rm /etc/bind/rndc.key
+
+COPY named.conf /etc/bind/named.conf
+COPY named.conf.d /etc/bind/named.conf.d
+
+RUN chown -R bind: /etc/bind; \
+    chown -R bind: /var/cache/bind;
+
+EXPOSE 5353/udp
+
+VOLUME /etc/bind
+
+USER bind
+
+CMD ["/bin/sh", "-c", "/usr/sbin/named -g -4 -p 5053"]

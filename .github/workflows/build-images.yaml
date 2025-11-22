@@ -1,0 +1,23 @@
+name: Build images
+
+on:
+  workflow_dispatch:
+    inputs:
+      alpine_tag:
+        type: string
+        description: Tag for source image
+        default: latest
+        required: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Build image
+      run: |
+        cd bind
+        docker build -t alpine-${{ github.event.inputs.message }} --build-arg ALPINE_TAG=${{ github.event.inputs.message.alpine_tag }} .
