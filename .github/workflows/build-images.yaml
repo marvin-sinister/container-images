@@ -15,6 +15,6 @@ jobs:
       run: |
         cd bind
         docker pull docker.io/library/alpine:latest
-        docker image inspect --format '{{json .}}' docker.io/library/alpine:latest
+        podman images
         ALPINE_TAG=$(docker inspect alpine:latest | jq -r '.[]["Annotations"]["org.opencontainers.image.version"]')
         docker build -t docker.io/marvinsinister/bind:alpine-${ALPINE_TAG} --build-arg ALPINE_TAG=${ALPINE_TAG} --file Containerfile .
