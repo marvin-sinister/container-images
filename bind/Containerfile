@@ -1,5 +1,5 @@
 ARG ALPINE_TAG=latest
-FROM alpine:$ALPINE_TAG
+FROM docker.io/library/alpine:$ALPINE_TAG
 
 LABEL maintainer="Marvin Sinister"
 
