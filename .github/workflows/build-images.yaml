@@ -20,4 +20,4 @@ jobs:
     - name: Build image
       run: |
         cd bind
-        docker build -t alpine-${{ github.event.inputs.alpine_tag }} --build-arg ALPINE_TAG=${{ github.event.inputs.alpine_tag }} --file Containerfile .
+        docker build -t bind:alpine-${{ github.event.inputs.alpine_tag }} --build-arg ALPINE_TAG=${{ github.event.inputs.alpine_tag }} --file Containerfile .
