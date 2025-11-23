@@ -90,11 +90,13 @@ jobs:
         podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
         podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
         podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
+        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:alpine
         podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:latest
         podman login -u ${{ vars.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }} docker.io
         podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }}
         podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
         podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
         podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
+        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:alpine
         podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:latest
         echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Build container docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }}"
