@@ -42,6 +42,7 @@ jobs:
       id: check_version_exists
       run: |
         REPO="marvinsinister/${{ env.SERVICE_NAME }}"
+        echo "REPO=$REPO" >> "$GITHUB_ENV"
         TAG=${{ env.PACKAGE_VERSION }}-alpine
         echo "TAG=$TAG" >> "$GITHUB_ENV"
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
@@ -60,8 +61,7 @@ jobs:
       id: check_alpine_changed
       if: ${{ env.VERSION_EXISTS == 'true' }}
       run: |
-        curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ env.TOKEN }}" "https://registry-1.docker.io/v2/$REPO/manifests/${{ env.TAG }}" | jq -r '.'
-        BASE_IMAGE=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ env.TOKEN }}" "https://registry-1.docker.io/v2/$REPO/manifests/${{ env.TAG }}" | jq -r '.["annotations"]["org.opencontainers.image.base.name"]')
+        BASE_IMAGE=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ env.TOKEN }}" "https://registry-1.docker.io/v2/${{ env.REPO }}/manifests/${{ env.TAG }}" | jq -r '.["annotations"]["org.opencontainers.image.base.name"]')
         if [[ $BASE_IMAGE != "alpine:${{ env.ALPINE_VERSION}}" ]] ; then
           echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Base image for ${{ env.SERVICE_NAME }} with version ${{ env.PACKAGE_VERSION }} changed from $BASE_IMAGE to alpine:${{ env.ALPINE_VERSION}}."
           echo "BASE_IMAGE_CHAGNED=true" >> "$GITHUB_ENV"
