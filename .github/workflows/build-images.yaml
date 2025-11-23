@@ -39,10 +39,8 @@ jobs:
         TAG=${{ env.SERVICE_VERSION }}-alpine
         echo "TAG=$TAG" >> "$GITHUB_ENV"
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
-        echo "::add-mask::$TOKEN"
         echo "TOKEN=$TOKEN" >> "$GITHUB_ENV"
         HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG")
-        echo "$HTTP_CODE"
         if [[ $HTTP_CODE != "200" ]] ; then
           echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Image for ${{ env.SERVICE_NAME }} with version ${{ env.SERVICE_VERSION }} doesn't exist."
           echo "VERSION_EXISTS=false" >> "$GITHUB_ENV"
