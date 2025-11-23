@@ -21,7 +21,7 @@ jobs:
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
         VERSION=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq -r '.["manifests"][0]["annotations"]["org.opencontainers.image.version"]')
         echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        echo "::notice title=Build bind container::alpine:latest version ${{ env.VERSION }}"
+        echo "::notice title=Build bind container::alpine:latest version is ${VERSION}"
 
     - name: Check if already built
       id: check_container_exists
@@ -35,7 +35,7 @@ jobs:
           echo "BUILD_NEW_VERSION=true" >> "$GITHUB_ENV"
           
         else
-          echo "::notice title=Build bind container::Image for alpine:$VERSION already exists. Skipping."
+          echo "::notice title=Build bind container::Image for alpine:${VERSION} already exists. Skipping."
           echo "BUILD_NEW_VERSION=false" >> "$GITHUB_ENV"
         fi
 
