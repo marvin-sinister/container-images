@@ -43,8 +43,19 @@ jobs:
       id: build_container
       if: ${{ env.BUILD_NEW_VERSION == 'true' }}
       run: |
-        cd bind
-        podman build -t docker.io/marvinsinister/bind:${TAG} --build-arg ALPINE_TAG=${VERSION} .
+        REPO_SHA="$(git rev-parse HEAD)"
+        cd "${{ env.IMAGE_NAME }}"
+        podman build \
+          --tag "docker.io/marvinsinister/${{ env.IMAGE_NAME }}:${TAG}" \
+          --build-arg="ALPINE_TAG=${VERSION}" \
+          --annotation="org.opencontainers.image.created=$(date --iso-8601=seconds)" \
+          --annotation="org.opencontainers.image.base.name=alpine:$VERSION" \
+          --annotation="org.opencontainers.image.revision=${REPO_SHA}" \
+          --annotation="org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}#${REPO_SHA}" \
+          --annotation="org.opencontainers.image.url=https://hub.docker.com/r/marvinsinister/${{ env.IMAGE_NAME }}" \
+          --annotation="org.opencontainers.image.version=$TAG" \
+          --annotation="org.opencontainers.image.authors=Marvin Sinister <marvin.sinister@gmail.com>" \
+          .
         podman tag docker.io/marvinsinister/bind:${TAG} docker.io/marvinsinister/bind:latest
         podman login -u ${{ vars.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }} docker.io
         podman push docker.io/marvinsinister/bind:${TAG}

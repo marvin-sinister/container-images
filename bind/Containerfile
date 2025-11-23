@@ -1,8 +1,6 @@
 ARG ALPINE_TAG=latest
 FROM docker.io/library/alpine:$ALPINE_TAG
 
-LABEL maintainer="Marvin Sinister"
-
 RUN addgroup -S -g 5353 bind && adduser -S -u 5353 -G bind bind; \
     apk add --no-cache ca-certificates bind; \
     mkdir /var/cache/bind; \
