@@ -23,7 +23,7 @@ jobs:
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
         ALPINE_VERSION=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq -r '.["manifests"][0]["annotations"]["org.opencontainers.image.version"]')
         echo "ALPINE_VERSION=$ALPINE_VERSION" >> "$GITHUB_ENV"
-        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::alpine:latest version is ${VERSION}"
+        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::alpine:latest version is ${ALPINE_VERSION}"
 
     - name: Get ${{ env.SERVICE_NAME }} version
       id: get_service_version
@@ -45,7 +45,6 @@ jobs:
         if [[ $HTTP_CODE != "200" ]] ; then
           echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Image for ${{ env.SERVICE_NAME }} with version ${{ env.SERVICE_VERSION }} doesn't exist."
           echo "VERSION_EXISTS=false" >> "$GITHUB_ENV"
-          
         else
           echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Image for ${{ env.SERVICE_NAME }} with version ${{ env.SERVICE_VERSION }} already exists."
           echo "VERSION_EXISTS=true" >> "$GITHUB_ENV"
