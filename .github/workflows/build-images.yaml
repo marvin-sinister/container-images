@@ -67,7 +67,7 @@ jobs:
 
     - name: Build container
       id: build_container
-      if: ${{ (env.VERSION_EXISTS == 'false' ) or (env.BASE_IMAGE_CHANGED == 'true") }}
+      if: ${{ (env.VERSION_EXISTS == 'false' ) or (env.BASE_IMAGE_CHANGED == 'true') }}
       run: |
         REPO_SHA="$(git rev-parse HEAD)"
         cd "${{ env.SERVICE_NAME }}"
