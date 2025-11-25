@@ -5,8 +5,6 @@ on:
   schedule:
     - cron: "42 1,7,13,19 * * *"
 
-env:
-  SERVICE_NAME: bind
 jobs:
   list-services:
     runs-on: ubuntu-latest
@@ -22,7 +20,11 @@ jobs:
         echo "matrix=$(ls -d */ | tr -d '/' | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
 
   build-and-push:
+    needs: [list-services]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.list-services.outputs.matrix) }}
 
     steps:
     - name: Checkout repo
@@ -36,9 +38,9 @@ jobs:
         TOKEN=$(curl -s -H "Accept: application/json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$REPO:pull" -u "${{ vars.DOCKERHUB_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | jq -r '.token')
         ALPINE_VERSION=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG" | jq -r '.["manifests"][0]["annotations"]["org.opencontainers.image.version"]')
         echo "ALPINE_VERSION=$ALPINE_VERSION" >> "$GITHUB_ENV"
-        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::alpine:latest version is ${ALPINE_VERSION}"
+        echo "::notice title=Build ${{ matrix.service }} container::alpine:latest version is ${ALPINE_VERSION}"
 
-    - name: Get ${{ env.SERVICE_NAME }} version
+    - name: Get ${{ matrix.service }} version
       id: get_service_version
       run: |
         podman pull docker.io/library/alpine:${{ env.ALPINE_VERSION }}
@@ -50,12 +52,12 @@ jobs:
         echo "SERVICE_PATCH_VERSION=$SERVICE_PATCH_VERSION" >> "$GITHUB_ENV"
         echo "SERVICE_MINOR_VERSION=$SERVICE_MINOR_VERSION" >> "$GITHUB_ENV"
         echo "SERVICE_MAJOR_VERSION=$SERVICE_MAJOR_VERSION" >> "$GITHUB_ENV"
-        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::The ${{ env.SERVICE_NAME }} version in alpine:${{ env.ALPINE_VERSION }} is ${PACKAGE_VERSION}."
+        echo "::notice title=Build ${{ matrix.service }} container::The ${{ matrix.service }} version in alpine:${{ env.ALPINE_VERSION }} is ${PACKAGE_VERSION}."
 
     - name: Check if already built
       id: check_version_exists
       run: |
-        REPO="marvinsinister/${{ env.SERVICE_NAME }}"
+        REPO="marvinsinister/${{ matrix.service }}"
         echo "REPO=$REPO" >> "$GITHUB_ENV"
         TAG=${{ env.PACKAGE_VERSION }}-alpine
         echo "TAG=$TAG" >> "$GITHUB_ENV"
@@ -64,10 +66,10 @@ jobs:
         echo "TOKEN=$TOKEN" >> "$GITHUB_ENV"
         HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${TOKEN}" "https://registry-1.docker.io/v2/$REPO/manifests/$TAG")
         if [[ $HTTP_CODE != "200" ]] ; then
-          echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Image for ${{ env.SERVICE_NAME }} with version ${{ env.PACKAGE_VERSION }} doesn't exist."
+          echo "::notice title=Build ${{ matrix.service }} container::Image for ${{ matrix.service }} with version ${{ env.PACKAGE_VERSION }} doesn't exist."
           echo "VERSION_EXISTS=false" >> "$GITHUB_ENV"
         else
-          echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Image for ${{ env.SERVICE_NAME }} with version ${{ env.PACKAGE_VERSION }} already exists."
+          echo "::notice title=Build ${{ matrix.service }} container::Image for ${{ matrix.service }} with version ${{ env.PACKAGE_VERSION }} already exists."
           echo "VERSION_EXISTS=true" >> "$GITHUB_ENV"
         fi
 
@@ -77,10 +79,10 @@ jobs:
       run: |
         BASE_IMAGE=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ env.TOKEN }}" "https://registry-1.docker.io/v2/${{ env.REPO }}/manifests/${{ env.TAG }}" | jq -r '.["annotations"]["org.opencontainers.image.base.name"]')
         if [[ $BASE_IMAGE != "alpine:${{ env.ALPINE_VERSION}}" ]] ; then
-          echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Base image for ${{ env.SERVICE_NAME }} with version ${{ env.PACKAGE_VERSION }} changed from $BASE_IMAGE to alpine:${{ env.ALPINE_VERSION}}."
+          echo "::notice title=Build ${{ matrix.service }} container::Base image for ${{ matrix.service }} with version ${{ env.PACKAGE_VERSION }} changed from $BASE_IMAGE to alpine:${{ env.ALPINE_VERSION}}."
           echo "BASE_IMAGE_CHAGNED=true" >> "$GITHUB_ENV"
         else
-          echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Base image $BASE_IMAGE didn't change."
+          echo "::notice title=Build ${{ matrix.service }} container::Base image $BASE_IMAGE didn't change."
           echo "BASE_IMAGE_CHAGNED=true" >> "$GITHUB_ENV"
         fi
 
@@ -89,28 +91,28 @@ jobs:
       if: ${{ (env.VERSION_EXISTS == 'false' ) || (env.BASE_IMAGE_CHANGED == 'true') }}
       run: |
         REPO_SHA="$(git rev-parse HEAD)"
-        cd "${{ env.SERVICE_NAME }}"
+        cd "${{ matrix.service }}"
         podman build \
-          --tag "docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }}" \
+          --tag "docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }}" \
           --build-arg="ALPINE_TAG=${{ env.ALPINE_VERSION }}" \
           --annotation="org.opencontainers.image.created=$(date --iso-8601=seconds)" \
           --annotation="org.opencontainers.image.base.name=alpine:${{ env.ALPINE_VERSION }}" \
           --annotation="org.opencontainers.image.revision=${REPO_SHA}" \
           --annotation="org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}#${REPO_SHA}" \
-          --annotation="org.opencontainers.image.url=https://hub.docker.com/r/marvinsinister/${{ env.SERVICE_NAME }}" \
+          --annotation="org.opencontainers.image.url=https://hub.docker.com/r/marvinsinister/${{ matrix.service }}" \
           --annotation="org.opencontainers.image.version=${{ env.TAG }}" \
           --annotation="org.opencontainers.image.authors=Marvin Sinister <marvin.sinister@gmail.com>" \
           .
-        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
-        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
-        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
-        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:alpine
-        podman tag docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }} docker.io/marvinsinister/${{ env.SERVICE_NAME }}:latest
+        podman tag docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }} docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
+        podman tag docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }} docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
+        podman tag docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }} docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
+        podman tag docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }} docker.io/marvinsinister/${{ matrix.service }}:alpine
+        podman tag docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }} docker.io/marvinsinister/${{ matrix.service }}:latest
         podman login -u ${{ vars.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }} docker.io
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }}
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:alpine
-        podman push docker.io/marvinsinister/${{ env.SERVICE_NAME }}:latest
-        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::Build container docker.io/marvinsinister/${{ env.SERVICE_NAME }}:${{ env.TAG }}"
+        podman push docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }}
+        podman push docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_PATCH_VERSION }}-alpine
+        podman push docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_MINOR_VERSION }}-alpine
+        podman push docker.io/marvinsinister/${{ matrix.service }}:${{ env.SERVICE_MAJOR_VERSION }}-alpine
+        podman push docker.io/marvinsinister/${{ matrix.service }}:alpine
+        podman push docker.io/marvinsinister/${{ matrix.service }}:latest
+        echo "::notice title=Build ${{ matrix.service }} container::Build container docker.io/marvinsinister/${{ matrix.service }}:${{ env.TAG }}"
