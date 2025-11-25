@@ -1,0 +1,10 @@
+ARG ALPINE_TAG=latest
+FROM docker.io/library/alpine:$ALPINE_TAG
+
+RUN apk add --no-cache ca-certificates postfix
+
+EXPOSE 2525/tcp
+
+VOLUME /etc/postfix
+
+CMD ["/usr/sbin/postfix", "start-fg"]
