@@ -44,7 +44,7 @@ jobs:
       id: get_service_version
       run: |
         podman pull docker.io/library/alpine:${{ env.ALPINE_VERSION }}
-        PACKAGE_VERSION=$(podman run -it docker.io/library/alpine:latest sh -c "apk update > /dev/null ; apk info bind | head -1 | cut -d '-' -f2- |cut -d ' ' -f1 | tr -d '\n'")
+        PACKAGE_VERSION=$(podman run -it docker.io/library/alpine:latest sh -c "apk update > /dev/null ; apk info ${{ matrix.service }} | head -1 | cut -d '-' -f2- |cut -d ' ' -f1 | tr -d '\n'")
         SERVICE_PATCH_VERSION=$(echo $PACKAGE_VERSION | cut -d '-' -f1)
         SERVICE_MINOR_VERSION=$(echo $SERVICE_PATCH_VERSION | cut -d '.' -f-2)
         SERVICE_MAJOR_VERSION=$(echo $SERVICE_MINOR_VERSION | cut -d '.' -f1)
