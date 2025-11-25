@@ -13,6 +13,7 @@ RUN chown -R bind: /etc/bind; \
     chown -R bind: /var/cache/bind;
 
 EXPOSE 5353/udp
+EXPOSE 5953/tcp
 
 VOLUME /etc/bind
 
