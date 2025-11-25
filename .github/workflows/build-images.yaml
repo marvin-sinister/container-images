@@ -19,7 +19,7 @@ jobs:
     - name: Set matrix for services
       id: set_matrix
       run: |
-        echo "::set-output name=matrix::$(ls -d */ | tr -d '/' | jq -R -s -c 'split("\n")[:-1]')"
+        echo "matrix=$(ls -d */ | tr -d '/' | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
 
   build-and-push:
     runs-on: ubuntu-latest
