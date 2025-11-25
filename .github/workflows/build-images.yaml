@@ -8,6 +8,19 @@ on:
 env:
   SERVICE_NAME: bind
 jobs:
+  list-services:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ stetps.set_matrix.outputs.matrix }}
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set matrix for services
+      id: set_matrix
+      run: |
+        echo "::set-output name=matrix::$(ls -d */ | tr -d '/' | jq -R -s -c 'split("\n")[:-1]')"
+
   build-and-push:
     runs-on: ubuntu-latest
 
