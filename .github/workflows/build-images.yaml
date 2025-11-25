@@ -11,7 +11,7 @@ jobs:
   list-services:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ stetps.set_matrix.outputs.matrix }}
+      matrix: ${{ steps.set_matrix.outputs.matrix }}
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
