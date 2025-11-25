@@ -28,8 +28,8 @@ jobs:
     - name: Get ${{ env.SERVICE_NAME }} version
       id: get_service_version
       run: |
-        podman pull alpine:${{ env.ALPINE_VERSION }}
-        PACKAGE_VERSION=$(podman run -it alpine:latest sh -c "apk update > /dev/null ; apk info bind | head -1 | cut -d '-' -f2- |cut -d ' ' -f1 | tr -d '\n'")
+        podman pull docker.io/library/alpine:${{ env.ALPINE_VERSION }}
+        PACKAGE_VERSION=$(podman run -it docker.io/library/alpine:latest sh -c "apk update > /dev/null ; apk info bind | head -1 | cut -d '-' -f2- |cut -d ' ' -f1 | tr -d '\n'")
         SERVICE_PATCH_VERSION=$(echo $PACKAGE_VERSION | cut -d '-' -f1)
         SERVICE_MINOR_VERSION=$(echo $SERVICE_PATCH_VERSION | cut -d '.' -f-2)
         SERVICE_MAJOR_VERSION=$(echo $SERVICE_MINOR_VERSION | cut -d '.' -f1)
@@ -37,6 +37,7 @@ jobs:
         echo "SERVICE_PATCH_VERSION=$SERVICE_PATCH_VERSION" >> "$GITHUB_ENV"
         echo "SERVICE_MINOR_VERSION=$SERVICE_MINOR_VERSION" >> "$GITHUB_ENV"
         echo "SERVICE_MAJOR_VERSION=$SERVICE_MAJOR_VERSION" >> "$GITHUB_ENV"
+        echo "::notice title=Build ${{ env.SERVICE_NAME }} container::The ${{ env.SERVICE_NAME }} version in alpine:${{ env.ALPINE_VERSION }} is ${PACKAGE_VERSION}."
 
     - name: Check if already built
       id: check_version_exists
