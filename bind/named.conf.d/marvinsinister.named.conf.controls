@@ -1,4 +1,4 @@
 controls {
-      inet 127.0.0.1 port 5953
+      inet 127.0.0.1 port $BIND_RNDC_PORT
       allow { 127.0.0.1; } keys { "rndc-key"; };
 };

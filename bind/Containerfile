@@ -8,15 +8,17 @@ RUN addgroup -S -g 5353 bind && adduser -S -u 5353 -G bind bind; \
 
 COPY named.conf /etc/bind/named.conf
 COPY named.conf.d /etc/bind/named.conf.d
+COPY entrypoint.sh /entrypoint.sh
 
 RUN chown -R bind: /etc/bind; \
     chown -R bind: /var/cache/bind;
 
-EXPOSE 5353/udp
+EXPOSE 5053/udp
 EXPOSE 5953/tcp
 
 VOLUME /etc/bind
 
 USER bind
 
-CMD ["/bin/sh", "-c", "/usr/sbin/named -g -4 -p 5053"]
+#CMD ["/bin/sh", "-c", "/usr/sbin/named -g -4 -p 5053"]
+ENTRYPOINT ["/entrypoint.sh"]

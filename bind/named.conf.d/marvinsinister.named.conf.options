@@ -23,6 +23,6 @@ options {
   dnssec-validation auto;
 
   auth-nxdomain no;    # conform to RFC1035
-  listen-on port 5353 { any; };
+  listen-on port $BIND_PORT { any; };
 };
 
